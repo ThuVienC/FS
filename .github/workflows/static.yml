@@ -47,6 +47,11 @@ jobs:
           rm -rf build/scripts
           rm -rf build/.git
 
+      - name: Secure & Obfuscate JS
+        run: |
+          npm install -g javascript-obfuscator
+          javascript-obfuscator ./build/assets/js --config ./ui-data/obfuscator-config.json --output ./build/assets/js
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
