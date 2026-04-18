@@ -52,6 +52,15 @@ jobs:
           npm install -g javascript-obfuscator
           javascript-obfuscator ./build/assets/js --config ./ui-data/obfuscator-config.json --output ./build/assets/js
 
+      - name: Minify HTML & CSS
+        run: |
+          npm install -g html-minifier-terser clean-css-cli
+          # Nén HTML
+          html-minifier-terser --input-dir ./build --output-dir ./build --collapse-whitespace --remove-comments --minify-js true --minify-css true --file-ext html
+          # Nén CSS
+          cleancss -o ./build/assets/css/main.css ./build/assets/css/main.css
+          cleancss -o ./build/assets/css/style.css ./build/assets/css/style.css
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
