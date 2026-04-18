@@ -1,0 +1,65 @@
+name: Add Movie to Database
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'input_add_movie.json'
+
+permissions:
+  contents: write
+
+jobs:
+  add-movie:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout FS (Public Trigger)
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.LOGIC_REPO_PAT }}
+          path: 'data-repo'
+
+      - name: Checkout FS-Logic (Private Logic & Data)
+        uses: actions/checkout@v4
+        with:
+          repository: 'ThuVienC/FS-Logic'
+          token: ${{ secrets.LOGIC_REPO_PAT }}
+          path: 'logic-repo'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          cd logic-repo
+          npm install
+
+      - name: Run add_movie script
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+          INPUT_FILE_PATH: '../data-repo/input_add_movie.json'
+          DATABASE_FILE_PATH: '../logic-repo/movies.json'
+        run: |
+          cd logic-repo
+          node scripts/add_movie.js
+
+      - name: Commit and push changes to FS (Reset Input)
+        run: |
+          cd data-repo
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add input_add_movie.json
+          git commit -m "chore: reset input [skip ci]" || echo "No changes to commit"
+          git push
+
+      - name: Commit and push changes to FS-Logic (Update Database)
+        run: |
+          cd logic-repo
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add movies.json
+          git commit -m "chore: update movies database [skip ci]" || echo "No changes to commit"
+          git push

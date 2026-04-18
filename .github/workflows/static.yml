@@ -1,0 +1,60 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Add Movie to Database"]
+    types:
+      - completed
+
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout FS-Logic (UI & Data)
+        uses: actions/checkout@v4
+        with:
+          repository: 'ThuVienC/FS-Logic'
+          token: ${{ secrets.LOGIC_REPO_PAT }}
+          path: 'ui-data'
+
+      - name: Sync from MongoDB
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          DATABASE_FILE_PATH: 'movies.json'
+        run: |
+          cd ui-data
+          npm install mongodb dotenv
+          node scripts/sync_db.js
+
+      - name: Prepare Deployment
+        run: |
+          mkdir build
+          cp -r ui-data/* build/
+          # movies.json đã được sync từ MongoDB ở bước trên
+          # Xóa các file không cần thiết cho deploy
+          rm -rf build/scripts
+          rm -rf build/.git
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './build'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
