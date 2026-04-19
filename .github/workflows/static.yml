@@ -3,6 +3,8 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: ["main"]
+    paths-ignore:
+      - 'input_add_movie.json'
   workflow_dispatch:
   workflow_run:
     workflows: ["Add Movie to Database"]
