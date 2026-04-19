@@ -6,6 +6,10 @@ on:
     paths:
       - 'input_add_movie.json'
 
+concurrency:
+  group: movie-pipeline
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
