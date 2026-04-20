@@ -71,6 +71,6 @@ jobs:
       - name: Delete old workflow runs (Cleanup Logs)
         if: always()
         run: |
-          gh run delete --all --repo ${{ github.repository }}
+          gh run list --limit 100 --json databaseId -q '.[].databaseId' | xargs -I{} gh run delete {}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
