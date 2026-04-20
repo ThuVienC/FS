@@ -67,3 +67,10 @@ jobs:
           git add movies.json
           git commit -m "chore: update movies database [skip ci]" || echo "No changes to commit"
           git push
+
+      - name: Delete old workflow runs (Cleanup Logs)
+        if: always()
+        run: |
+          gh run delete --all --repo ${{ github.repository }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
