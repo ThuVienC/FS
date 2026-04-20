@@ -1,0 +1,56 @@
+name: Rescrape Fshare Links
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: movie-pipeline
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  rescrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout FS-Logic (Private Logic & Data)
+        uses: actions/checkout@v4
+        with:
+          repository: 'ThuVienC/FS-Logic'
+          token: ${{ secrets.LOGIC_REPO_PAT }}
+          path: 'logic-repo'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          cd logic-repo
+          npm install
+
+      - name: Run rescrape script
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          DATABASE_FILE_PATH: './movies.json'
+        run: |
+          cd logic-repo
+          npm run rescrape
+
+      - name: Commit and push changes
+        run: |
+          cd logic-repo
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add movies.json
+          git commit -m "chore: fix missing fshare metadata [skip ci]" || echo "No changes to commit"
+          git push
+
+      - name: Delete workflow runs (Cleanup Logs)
+        if: always()
+        run: |
+          gh run delete --all --repo ${{ github.repository }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
